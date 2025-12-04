@@ -1,0 +1,20 @@
+{
+  "manifestVersion": 1,
+  "appID": "cli_a9bacafba1f89bd9",
+  "appType": "docs-addon",
+  "blockTypeID": "blk_693076e600c04bd6a40b0b3a",
+  "projectName": "lark-doc-excalidraw",
+  "contributes": {
+    "addPanel": {
+      "initialHeight": 600,
+      "view": "index.html",
+      "resizable": true,
+      "supportFullscreen": true,
+      "resizeType": "free",
+      "useHostLoading": true,
+      "useInteraction": true
+    }
+  },
+  "permissions": ["document:read", "document:write", "block:read", "block:write", "fullscreen"],
+  "url": "https://bytedance.larkoffice.com/docx/XHOydCBoPoPRW4xr2EjcUCfWndd"
+}
