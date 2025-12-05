@@ -1,0 +1,75 @@
+/**
+ * TopToolbar 组件样式
+ */
+
+.topToolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border-bottom: 1px solid #e1e4e8;
+  background: #f6f8fa;
+  gap: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.modeSwitcher {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.textPrimary {
+  color: #6965db;
+  font-weight: 600;
+}
+
+.toolbarBtn {
+  padding: 6px 12px;
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  background: #fff;
+  color: #24292f;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.toolbarBtn:hover {
+  background: #f3f4f6;
+  border-color: #8c959f;
+}
+
+.modeBtn {
+  padding: 6px 12px;
+  border: 1px solid #6965db;
+  border-radius: 6px;
+  background: #fff;
+  color: #6965db;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 500;
+}
+
+.modeBtn.editBtn:hover {
+  background: #6965db;
+  color: #fff;
+}
+
+.modeBtn.viewBtn {
+  background: #6965db;
+  color: #fff;
+}
+
+.modeBtn.viewBtn:hover {
+  background: #4c4a9f;
+}
