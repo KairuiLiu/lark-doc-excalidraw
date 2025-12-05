@@ -1,4 +1,4 @@
-# Lark Doc Excalidraw Add-on
+# Lark Docs Excalidraw Add-on
 
 一个集成了 [Excalidraw](https://excalidraw.com/) 绘图功能的飞书文档插件，提供强大的白板绘图能力。
 

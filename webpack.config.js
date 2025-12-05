@@ -33,6 +33,12 @@ const config = {
         enforce: 'pre',
       },
       {
+        test: /\.m?js/,
+        resolve: {
+          fullySpecified: false,
+        },
+      },
+      {
         oneOf: [
           {
             test: /\.[jt]sx?$/,

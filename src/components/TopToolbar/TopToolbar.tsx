@@ -1,15 +1,12 @@
 /**
  * 顶部工具栏组件的属性
  */
+import { useDocsService } from '../../hooks/useDocsService';
 import styles from './TopToolbar.module.css';
 
 interface TopToolbarProps {
   /** 是否处于编辑模式 */
   isEditingMode: boolean;
-  /** 切换全屏模式的处理函数 */
-  onToggleFullScreen: () => void;
-  /** 导出绘图的处理函数 */
-  onExportDrawing: () => void;
   /** 切换编辑/查看模式的处理函数 */
   onToggleEditMode: () => void;
 }
@@ -18,12 +15,9 @@ interface TopToolbarProps {
  * 顶部工具栏组件
  * 提供全屏切换、导出文件、模式切换等功能
  */
-export const TopToolbar = ({
-  isEditingMode,
-  onToggleFullScreen,
-  onExportDrawing,
-  onToggleEditMode
-}: TopToolbarProps) => {
+export const TopToolbar = ({ isEditingMode, onToggleEditMode }: TopToolbarProps) => {
+  const { toggleFullscreen } = useDocsService();
+
   return (
     <div className={styles.topToolbar}>
       <div className={styles.modeSwitcher}>
@@ -36,14 +30,25 @@ export const TopToolbar = ({
         <span className={styles.textPrimary}>Excalidraw</span>
       </div>
       <div className={styles.modeSwitcher}>
-        <button onClick={onToggleFullScreen} className={styles.toolbarBtn}>
+        <button
+          onClick={(e) => {
+            e.currentTarget.blur();
+            toggleFullscreen();
+          }}
+          className={styles.toolbarBtn}
+          tabIndex={-1}
+        >
           切换全屏
         </button>
-        <button onClick={onExportDrawing} className={styles.toolbarBtn}>
-          导出文件
-        </button>
 
-        <button onClick={onToggleEditMode} className={`${styles.modeBtn} ${styles.viewBtn}`}>
+        <button
+          onClick={(e) => {
+            e.currentTarget.blur();
+            onToggleEditMode();
+          }}
+          className={`${styles.modeBtn} ${styles.viewBtn}`}
+          tabIndex={-1}
+        >
           {isEditingMode ? '编辑模式' : '查看模式'}
         </button>
       </div>
