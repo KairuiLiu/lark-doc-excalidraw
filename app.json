@@ -18,13 +18,6 @@
       "view": "index.html"
     }
   },
-  "permissions": [
-    "document:read",
-    "document:write",
-    "block:read",
-    "block:write",
-    "fullscreen",
-    "docx:document:readonly"
-  ],
+  "permissions": ["document:read", "document:write", "block:read", "block:write", "fullscreen"],
   "url": "https://bytedance.larkoffice.com/docx/XHOydCBoPoPRW4xr2EjcUCfWndd"
 }
