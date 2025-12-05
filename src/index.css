@@ -4,6 +4,31 @@
  * 组件样式已拆分到各组件的 .module.css 文件中
  */
 
+:root {
+  --bg-color: #ffffff;
+  --text-color: #1f2329;
+  --border-color: #e1e4e8;
+  --toolbar-bg: #f5f6f7;
+  --primary-color: #6965db;
+  --primary-hover-color: #4c4a9f;
+  --btn-hover-bg: #f3f4f6;
+  --btn-hover-border: #8c959f;
+  --mode-btn-text: var(--primary-color);
+  --text-secondary: #646a73;
+  --text-on-primary: #ffffff;
+}
+
+[data-theme='dark'] {
+  --bg-color: #1a1a1a; /* 暗色背景 */
+  --text-color: #ebebeb; /* 浅色文字 */
+  --border-color: #444444;
+  --toolbar-bg: #2d2d2d;
+  --btn-hover-bg: #3a3a3a;
+  --btn-hover-border: #6b6b6b;
+  --mode-btn-text: var(--text-color);
+  --text-secondary: #8f959e;
+}
+
 /* 基础重置和全局设置 */
 body,
 html,
@@ -19,8 +44,8 @@ html,
 }
 
 /* 根容器样式 */
-#root {
-  border: 1px solid #e1e4e8;
+#lark-docs-excalidraw-container {
+  border: 1px solid var(--border-color);
   box-sizing: border-box;
   border-radius: 8px;
   overflow: hidden;
@@ -32,7 +57,7 @@ html,
   height: 100%;
   display: flex;
   flex-direction: column;
-  background: #fff;
+  background: var(--bg-color);
   overflow: hidden;
   transition: all 0.2s ease;
 }

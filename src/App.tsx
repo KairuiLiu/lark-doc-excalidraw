@@ -36,21 +36,27 @@ export default () => {
   const isDocsEditMode = docsMode === DOCS_MODE.EDITING;
   const [isAddonEditMode, toggleAddonEditMode] = useAddonEditMode();
   const { containerRef } = useAppLifecycle(loadExistingData, flushPendingData);
+  const { isDarkMode } = useDocsService();
   useAutoZoom(isAddonEditMode);
 
-  if (isLoadingData) return <div>数据加载中...</div>;
-
-  if (!hasExistingData) {
-    return <EmptyStateView onFileUpload={handleFileUpload} onCreateNew={createNewDrawing} />;
-  }
-
   return (
-    <div ref={containerRef} className="excalidraw-container">
-      {isDocsEditMode && (
-        <TopToolbar isEditingMode={isAddonEditMode} onToggleEditMode={toggleAddonEditMode} />
-      )}
+    <div
+      id="lark-docs-excalidraw-container"
+      ref={containerRef}
+      className="excalidraw-container"
+      data-theme={isDarkMode ? 'dark' : 'light'}
+    >
+      {isLoadingData && <div>数据加载中...</div>}
+      {!hasExistingData && <EmptyStateView onFileUpload={handleFileUpload} onCreateNew={createNewDrawing} />}
+      {!isLoadingData && hasExistingData && (
+        <>
+          {isDocsEditMode && (
+            <TopToolbar isEditingMode={isAddonEditMode} onToggleEditMode={toggleAddonEditMode} />
+          )}
 
-      <ExcalidrawCanvas isEditingMode={isAddonEditMode} />
+          <ExcalidrawCanvas isEditingMode={isAddonEditMode} isDarkMode={isDarkMode} />
+        </>
+      )}
     </div>
   );
 };

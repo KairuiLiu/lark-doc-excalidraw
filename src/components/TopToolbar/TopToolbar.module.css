@@ -1,14 +1,10 @@
-/**
- * TopToolbar 组件样式
- */
-
 .topToolbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 8px 12px;
-  border-bottom: 1px solid #e1e4e8;
-  background: #f6f8fa;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--toolbar-bg);
   gap: 8px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -22,16 +18,16 @@
 }
 
 .textPrimary {
-  color: #6965db;
+  color: var(--primary-color);
   font-weight: 600;
 }
 
 .toolbarBtn {
   padding: 6px 12px;
-  border: 1px solid #d0d7de;
+  border: 1px solid var(--border-color);
   border-radius: 6px;
-  background: #fff;
-  color: #24292f;
+  background: var(--bg-color);
+  color: var(--text-color);
   font-size: 12px;
   cursor: pointer;
   transition: all 0.2s;
@@ -41,16 +37,16 @@
 }
 
 .toolbarBtn:hover {
-  background: #f3f4f6;
-  border-color: #8c959f;
+  background: var(--btn-hover-bg); /* 自动切换 #f3f4f6 / #3a3a3a */
+  border-color: var(--btn-hover-border); /* 自动切换 #8c959f / #6b6b6b */
 }
 
 .modeBtn {
   padding: 6px 12px;
-  border: 1px solid #6965db;
+  border: 1px solid var(--primary-color);
   border-radius: 6px;
-  background: #fff;
-  color: #6965db;
+  background: var(--bg-color);
+  color: var(--mode-btn-text);
   font-size: 12px;
   cursor: pointer;
   transition: all 0.2s;
@@ -61,15 +57,15 @@
 }
 
 .modeBtn.editBtn:hover {
-  background: #6965db;
-  color: #fff;
+  background: var(--primary-color);
+  color: var(--bg-color); /* 保持背景色反转 */
 }
 
 .modeBtn.viewBtn {
-  background: #6965db;
-  color: #fff;
+  background: var(--primary-color);
+  color: var(--bg-color);
 }
 
 .modeBtn.viewBtn:hover {
-  background: #4c4a9f;
+  background: var(--primary-hover-color);
 }

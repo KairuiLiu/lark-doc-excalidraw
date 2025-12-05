@@ -19,13 +19,15 @@ import { useDocsService } from '../../hooks/useDocsService';
 interface ExcalidrawCanvasProps {
   /** 是否为编辑模式 */
   isEditingMode: boolean;
+  /** 是否为暗色模式 */
+  isDarkMode: boolean;
 }
 
 /**
  * Excalidraw 画布组件
  * 包装 Excalidraw 编辑器并处理相关事件
  */
-export const ExcalidrawCanvas = ({ isEditingMode }: ExcalidrawCanvasProps) => {
+export const ExcalidrawCanvas = ({ isEditingMode, isDarkMode }: ExcalidrawCanvasProps) => {
   const { saveExcalidrawData, excalidrawData } = useExcalidrawData();
   const { setExcalidrawAPI } = useExcalidrawDataContext();
   const { notifyReady } = useDocsService();
@@ -125,6 +127,7 @@ export const ExcalidrawCanvas = ({ isEditingMode }: ExcalidrawCanvasProps) => {
         initialData={excalidrawData || { elements: [], appState: { collaborators: new Map() }, files: {} }}
         viewModeEnabled={!isEditingMode}
         onChange={handleExcalidrawChange}
+        theme={isDarkMode ? 'dark' : 'light'}
         UIOptions={{
           canvasActions: {
             loadScene: false,
