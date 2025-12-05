@@ -1,0 +1,28 @@
+/**
+ * ExcalidrawCanvas 组件样式
+ */
+
+.excalidrawWrapper {
+  flex: 1;
+  position: relative;
+}
+
+.excalidrawWrapper.readingMode {
+  pointer-events: auto;
+}
+
+.excalidrawWrapper :global(.excalidraw) {
+  height: 100% !important;
+}
+
+.excalidrawWrapper.readingMode :global(.excalidraw) {
+  height: 100% !important;
+}
+
+/* 在查看模式下隐藏不必要的 UI 元素 */
+.excalidrawWrapper.readingMode :global(.excalidraw .layer-ui__wrapper__top-left),
+.excalidrawWrapper.readingMode :global(.excalidraw .layer-ui__wrapper__top-right),
+.excalidrawWrapper.readingMode :global(.excalidraw .layer-ui__wrapper__footer-left),
+.excalidrawWrapper.readingMode :global(.excalidraw .layer-ui__wrapper__footer-right) {
+  display: none !important;
+}

@@ -1,3 +1,10 @@
+/**
+ * 全局样式
+ * 只包含应用级别的基础样式
+ * 组件样式已拆分到各组件的 .module.css 文件中
+ */
+
+/* 基础重置和全局设置 */
 body,
 html,
 #root {
@@ -11,12 +18,15 @@ html,
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* 根容器样式 */
 #root {
   border: 1px solid #e1e4e8;
   box-sizing: border-box;
   border-radius: 8px;
+  overflow: hidden;
 }
 
+/* Excalidraw 容器基础样式（多个组件共用） */
 .excalidraw-container {
   width: 100%;
   height: 100%;
@@ -25,235 +35,4 @@ html,
   background: #fff;
   overflow: hidden;
   transition: all 0.2s ease;
-}
-
-.loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  font-size: 16px;
-  color: #666;
-}
-
-.upload-section {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  padding: 40px;
-  text-align: center;
-}
-
-.upload-section h3 {
-  margin: 0 0 16px 0;
-  font-size: 20px;
-  color: #1f2329;
-  font-weight: 600;
-}
-
-.upload-section p {
-  margin: 0 0 32px 0;
-  font-size: 14px;
-  color: #646a73;
-  line-height: 1.5;
-}
-
-.upload-buttons {
-  display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-.upload-btn,
-.create-btn {
-  padding: 12px 24px;
-  border: 2px solid #6965db;
-  border-radius: 6px;
-  background: #fff;
-  color: #6965db;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.upload-btn:hover,
-.create-btn:hover {
-  background: #6965db;
-  color: #fff;
-}
-
-.create-btn {
-  background: #6965db;
-  color: #fff;
-}
-
-.create-btn:hover {
-  background: #4c4a9f;
-}
-
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  color: #646a73;
-  font-size: 14px;
-  gap: 16px;
-}
-
-.edit-mode-btn {
-  padding: 12px 24px;
-  border: 2px solid #6965db;
-  border-radius: 6px;
-  background: #6965db;
-  color: #fff;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.edit-mode-btn:hover {
-  background: #4c4a9f;
-  border-color: #4c4a9f;
-}
-
-.top-toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 12px;
-  border-bottom: 1px solid #e1e4e8;
-  background: #f6f8fa;
-  gap: 8px;
-}
-
-.toolbar-actions {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.mode-btn {
-  padding: 6px 12px;
-  border: 1px solid #6965db;
-  border-radius: 6px;
-  background: #fff;
-  color: #6965db;
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-weight: 500;
-}
-
-.mode-btn.edit-btn:hover {
-  background: #6965db;
-  color: #fff;
-}
-
-.mode-btn.view-btn {
-  background: #6965db;
-  color: #fff;
-}
-
-.mode-btn.view-btn:hover {
-  background: #4c4a9f;
-}
-
-.toolbar {
-  display: flex;
-  justify-content: flex-end;
-  padding: 8px 12px;
-  border-bottom: 1px solid #e1e4e8;
-  background: #f6f8fa;
-  gap: 8px;
-}
-
-.mode-switcher {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.toolbar-btn {
-  padding: 6px 12px;
-  border: 1px solid #d0d7de;
-  border-radius: 6px;
-  background: #fff;
-  color: #24292f;
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.toolbar-btn:hover {
-  background: #f3f4f6;
-  border-color: #8c959f;
-}
-
-.export-btn {
-  padding: 6px 12px;
-  border: 1px solid #d0d7de;
-  border-radius: 6px;
-  background: #fff;
-  color: #24292f;
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.export-btn:hover {
-  background: #f3f4f6;
-  border-color: #8c959f;
-}
-
-.excalidraw-wrapper {
-  flex: 1;
-  position: relative;
-}
-
-.excalidraw-wrapper.reading-mode {
-  pointer-events: auto;
-}
-
-.excalidraw-wrapper .excalidraw {
-  height: 100% !important;
-}
-
-.excalidraw-wrapper.reading-mode .excalidraw {
-  height: 100% !important;
-}
-
-/* Hide unnecessary UI elements in reading mode */
-.excalidraw-wrapper.reading-mode .excalidraw .layer-ui__wrapper__top-left,
-.excalidraw-wrapper.reading-mode .excalidraw .layer-ui__wrapper__top-right,
-.excalidraw-wrapper.reading-mode .excalidraw .layer-ui__wrapper__footer-left,
-.excalidraw-wrapper.reading-mode .excalidraw .layer-ui__wrapper__footer-right {
-  display: none !important;
-}
-
-.text-primary {
-  color: #6965db;
-  font-weight: 600;
 }

@@ -1,0 +1,12 @@
+/**
+ * LoadingView 组件样式
+ */
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-size: 16px;
+  color: #666;
+}
