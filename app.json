@@ -13,8 +13,18 @@
       "resizeType": "free",
       "useHostLoading": true,
       "useInteraction": true
+    },
+    "fullscreen": {
+      "view": "index.html"
     }
   },
-  "permissions": ["document:read", "document:write", "block:read", "block:write", "fullscreen"],
+  "permissions": [
+    "document:read",
+    "document:write",
+    "block:read",
+    "block:write",
+    "fullscreen",
+    "docx:document:readonly"
+  ],
   "url": "https://bytedance.larkoffice.com/docx/XHOydCBoPoPRW4xr2EjcUCfWndd"
 }

@@ -24,8 +24,3 @@ npm run start
 ```
 npm run upload
 ```
-
-### TODO
-
-- 自动保存不及时
-- 全屏查看

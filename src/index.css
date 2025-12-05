@@ -11,6 +11,12 @@ html,
   -moz-osx-font-smoothing: grayscale;
 }
 
+#root {
+  border: 1px solid #e1e4e8;
+  box-sizing: border-box;
+  border-radius: 8px;
+}
+
 .excalidraw-container {
   width: 100%;
   height: 100%;
