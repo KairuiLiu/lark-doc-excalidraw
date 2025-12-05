@@ -17,6 +17,15 @@
   gap: 8px;
 }
 
+.toolbarBtnList {
+  opacity: 0;
+  transition: opacity 0.1s;
+}
+
+:root:hover .toolbarBtnList {
+  opacity: 1;
+}
+
 .textPrimary {
   color: var(--primary-color);
   font-weight: 600;

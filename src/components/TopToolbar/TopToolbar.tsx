@@ -29,7 +29,7 @@ export const TopToolbar = ({ isEditingMode, onToggleEditMode }: TopToolbarProps)
         />
         <span className={styles.textPrimary}>Excalidraw</span>
       </div>
-      <div className={styles.modeSwitcher}>
+      <div className={`${styles.modeSwitcher} ${styles.toolbarBtnList}`}>
         <button
           onClick={(e) => {
             e.currentTarget.blur();
