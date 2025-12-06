@@ -51,14 +51,8 @@ interface PendingSave {
  * @returns 数据状态和操作方法
  */
 export const useExcalidrawData = () => {
-  const {
-    excalidrawData,
-    title,
-    setExcalidrawData,
-    setIsLoadingData,
-    setHasExistingData,
-    setTitle
-  } = useExcalidrawDataContext();
+  const { excalidrawData, title, setExcalidrawData, setIsLoadingData, setHasExistingData, setTitle } =
+    useExcalidrawDataContext();
 
   const { loadRecord, saveRecord, notifyReady, docMiniApp } = useDocsService();
 
@@ -100,16 +94,25 @@ export const useExcalidrawData = () => {
   // 初始化时, 从 Lark 文档存储加载已有数据
   useEffect(() => {
     const initializeComponent = async () => {
-      // TODO 有什么用
+      // 加载数据, 如果请求失败则用不就绪, 防止本地上传新数据
       setIsLoadingData(true);
+      let income;
       try {
-        const income = await loadRecord();
-        if (income) handleReplaceLocalData(income);
-        notifyReady();
+        income = await loadRecord();
       } catch (error) {
         console.error('Failed to load from Lark Record API:', error);
+        return;
       } finally {
         setIsLoadingData(false);
+      }
+
+      // 处理数据
+      try {
+        if (income) handleReplaceLocalData(income);
+      } catch (error) {
+        console.error('Error handling remote data on initialization:', error);
+      } finally {
+        notifyReady();
       }
     };
 

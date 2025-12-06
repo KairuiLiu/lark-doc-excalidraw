@@ -135,6 +135,10 @@ export const useDocsService = () => {
    */
   const saveRecord = useCallback(
     async (data: BlockData) => {
+      if (docsMode === DOCS_MODE.READING) {
+        console.warn('[DocsService] Attempted to save in READING mode. Operation aborted.');
+        return;
+      }
       try {
         await docMiniApp.Record.setRecord([
           {
@@ -151,7 +155,7 @@ export const useDocsService = () => {
         throw error;
       }
     },
-    [docMiniApp]
+    [docMiniApp, docsMode]
   );
 
   /**
