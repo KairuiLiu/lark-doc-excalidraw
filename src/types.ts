@@ -7,4 +7,5 @@ export interface ExcalidrawData {
 export interface BlockData {
   excalidrawData?: ExcalidrawData;
   lastModified?: string;
+  title?: string;
 }

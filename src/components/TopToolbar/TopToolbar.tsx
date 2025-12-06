@@ -1,8 +1,10 @@
 /**
  * 顶部工具栏组件的属性
  */
+import { useState } from 'react';
 import { useDocsService } from '../../hooks/useDocsService';
 import styles from './TopToolbar.module.css';
+import { useExcalidrawData } from '../../hooks/useExcalidrawData';
 
 interface TopToolbarProps {
   /** 是否处于编辑模式 */
@@ -17,6 +19,27 @@ interface TopToolbarProps {
  */
 export const TopToolbar = ({ isEditingMode, onToggleEditMode }: TopToolbarProps) => {
   const { toggleFullscreen } = useDocsService();
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+
+  const { title, saveTitle } = useExcalidrawData();
+
+  const handleTitleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const text = e.currentTarget.value;
+    setIsEditingTitle(false);
+    const finalTitle = text.trim() === '' ? '无名画板' : text;
+    e.currentTarget.value = finalTitle;
+    saveTitle(finalTitle);
+  };
+
+  const handleTitleFocus = () => {
+    setIsEditingTitle(true);
+  };
+
+  const handleTitleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
+      e.currentTarget.blur();
+    }
+  };
 
   return (
     <div className={styles.topToolbar}>
@@ -27,7 +50,16 @@ export const TopToolbar = ({ isEditingMode, onToggleEditMode }: TopToolbarProps)
           height={27}
           alt="Excalidraw Logo"
         />
-        <span className={styles.textPrimary}>Excalidraw</span>
+        <input
+          type="text"
+          defaultValue={title ?? 'Excalidraw'}
+          onBlur={handleTitleBlur}
+          onFocus={handleTitleFocus}
+          onKeyDown={handleTitleKeyDown}
+          className={`${styles.titleInput} ${isEditingTitle ? styles.titleInputEditing : ''}`}
+          spellCheck={false}
+          placeholder="无名画板"
+        />
       </div>
       <div className={`${styles.modeSwitcher} ${styles.toolbarBtnList}`}>
         <button

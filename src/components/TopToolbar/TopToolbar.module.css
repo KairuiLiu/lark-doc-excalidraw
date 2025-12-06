@@ -14,7 +14,6 @@
 .modeSwitcher {
   display: flex;
   align-items: center;
-  gap: 8px;
 }
 
 .toolbarBtnList {
@@ -29,6 +28,33 @@
 .textPrimary {
   color: var(--primary-color);
   font-weight: 600;
+}
+
+.titleInput {
+  color: var(--primary-color);
+  font-weight: 600;
+  font-size: 14px;
+  padding: 4px 8px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  outline: none;
+  transition: all 0.2s;
+  cursor: text;
+  min-width: 100px;
+  max-width: 300px;
+}
+
+.titleInput:hover {
+  border-color: var(--border-color);
+  background: var(--bg-color);
+}
+
+.titleInput:focus,
+.titleInputEditing {
+  border-color: var(--primary-color);
+  background: var(--bg-color);
+  cursor: text;
 }
 
 .toolbarBtn {

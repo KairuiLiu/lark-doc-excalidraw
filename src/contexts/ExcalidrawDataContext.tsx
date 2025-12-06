@@ -12,6 +12,7 @@ interface ExcalidrawDataContextType {
   excalidrawData: ExcalidrawData | null;
   isLoadingData: boolean;
   hasExistingData: boolean;
+  title: string | null;
 
   // API 状态
   excalidrawAPI: any;
@@ -20,6 +21,7 @@ interface ExcalidrawDataContextType {
   setExcalidrawData: Dispatch<SetStateAction<ExcalidrawData | null>>;
   setIsLoadingData: Dispatch<SetStateAction<boolean>>;
   setHasExistingData: Dispatch<SetStateAction<boolean>>;
+  setTitle: Dispatch<SetStateAction<string | null>>;
   setExcalidrawAPI: Dispatch<SetStateAction<any>>;
 }
 
@@ -37,6 +39,8 @@ export const ExcalidrawDataProvider = ({ children }: { children: ReactNode }) =>
   const [isLoadingData, setIsLoadingData] = useState(true);
   // 是否存在已有数据
   const [hasExistingData, setHasExistingData] = useState(false);
+  // 图名
+  const [title, setTitle] = useState<string | null>(null);
   // Excalidraw API 实例
   const [excalidrawAPI, setExcalidrawAPI] = useState<any>(null);
 
@@ -46,10 +50,12 @@ export const ExcalidrawDataProvider = ({ children }: { children: ReactNode }) =>
         excalidrawData,
         isLoadingData,
         hasExistingData,
+        title,
         excalidrawAPI,
         setExcalidrawData,
         setIsLoadingData,
         setHasExistingData,
+        setTitle,
         setExcalidrawAPI
       }}
     >
