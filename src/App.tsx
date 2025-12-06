@@ -19,6 +19,7 @@ import { EmptyStateView } from './components/EmptyStateView/EmptyStateView';
 import { TopToolbar } from './components/TopToolbar/TopToolbar';
 import { ExcalidrawCanvas } from './components/ExcalidrawCanvas/ExcalidrawCanvas';
 import { useAutoZoom } from './hooks/useAutoZoom';
+import { t } from '@lingui/core/macro';
 
 /**
  * 应用主组件
@@ -46,7 +47,7 @@ export default () => {
       className="excalidraw-container"
       data-theme={isDarkMode ? 'dark' : 'light'}
     >
-      {isLoadingData && <div>数据加载中...</div>}
+      {isLoadingData && <div>{t`数据加载中`}...</div>}
       {!hasExistingData && <EmptyStateView onFileUpload={handleFileUpload} onCreateNew={createNewDrawing} />}
       {!isLoadingData && hasExistingData && (
         <>

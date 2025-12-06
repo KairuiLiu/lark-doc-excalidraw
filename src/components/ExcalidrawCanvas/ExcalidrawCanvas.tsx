@@ -31,6 +31,7 @@ export const ExcalidrawCanvas = ({ isEditingMode, isDarkMode }: ExcalidrawCanvas
   const { saveExcalidrawData, excalidrawData } = useExcalidrawData();
   const { setExcalidrawAPI } = useExcalidrawDataContext();
   const { notifyReady } = useDocsService();
+  const { language } = useDocsService();
   const excalidrawWrapperRef = useRef<HTMLDivElement | null>(null);
   /**
    * 处理 Excalidraw 内容变化
@@ -136,6 +137,7 @@ export const ExcalidrawCanvas = ({ isEditingMode, isDarkMode }: ExcalidrawCanvas
             changeViewBackgroundColor: isEditingMode
           }
         }}
+        langCode={language}
         detectScroll={false}
         handleKeyboardGlobally={false}
       />

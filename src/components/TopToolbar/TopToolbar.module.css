@@ -19,6 +19,7 @@
 .toolbarBtnList {
   opacity: 0;
   transition: opacity 0.1s;
+  gap: 8px;
 }
 
 :root:hover .toolbarBtnList {

@@ -1,0 +1,1 @@
+/*eslint-disable*/module.exports={messages:JSON.parse("{\"4/cNeu\":[\"无名画板\"],\"IXA7VO\":[\"数据加载中\"],\"Jz1yfT\":[\"查看模式\"],\"KQ6f9D\":[\"切换全屏\"],\"PIBJnH\":[\"创建新绘图\"],\"V+GoFJ\":[\"编辑模式\"],\"X50SbW\":[\"Excalidraw 绘图\"],\"hJBSPu\":[\"请上传一个 Excalidraw 文件或创建新绘图：\"],\"y0dzyq\":[\"上传 Excalidraw 文件\"]}")};

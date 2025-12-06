@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { useDocsService } from '../../hooks/useDocsService';
 import styles from './TopToolbar.module.css';
 import { useExcalidrawData } from '../../hooks/useExcalidrawData';
+import { t } from '@lingui/core/macro';
 
 interface TopToolbarProps {
   /** 是否处于编辑模式 */
@@ -26,7 +27,7 @@ export const TopToolbar = ({ isEditingMode, onToggleEditMode }: TopToolbarProps)
   const handleTitleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     const text = e.currentTarget.value;
     setIsEditingTitle(false);
-    const finalTitle = text.trim() === '' ? '无名画板' : text;
+    const finalTitle = text.trim() === '' ? t`无名画板` : text;
     e.currentTarget.value = finalTitle;
     saveTitle(finalTitle);
   };
@@ -58,7 +59,7 @@ export const TopToolbar = ({ isEditingMode, onToggleEditMode }: TopToolbarProps)
           onKeyDown={handleTitleKeyDown}
           className={`${styles.titleInput} ${isEditingTitle ? styles.titleInputEditing : ''}`}
           spellCheck={false}
-          placeholder="无名画板"
+          placeholder={t`无名画板`}
         />
       </div>
       <div className={`${styles.modeSwitcher} ${styles.toolbarBtnList}`}>
@@ -70,7 +71,7 @@ export const TopToolbar = ({ isEditingMode, onToggleEditMode }: TopToolbarProps)
           className={styles.toolbarBtn}
           tabIndex={-1}
         >
-          切换全屏
+          {t`切换全屏`}
         </button>
 
         <button
@@ -81,7 +82,7 @@ export const TopToolbar = ({ isEditingMode, onToggleEditMode }: TopToolbarProps)
           className={`${styles.modeBtn} ${styles.viewBtn}`}
           tabIndex={-1}
         >
-          {isEditingMode ? '编辑模式' : '查看模式'}
+          {isEditingMode ? t`编辑模式` : t`查看模式`}
         </button>
       </div>
     </div>

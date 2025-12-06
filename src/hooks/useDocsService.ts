@@ -10,8 +10,9 @@
  * - 全屏切换
  */
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { BlockitClient, DOCS_MODE } from '@lark-opdev/block-docs-addon-api';
+import { BlockitClient, DOCS_MODE, Locale } from '@lark-opdev/block-docs-addon-api';
 import type { BlockData } from '../types';
+import { i18n } from '@lingui/core';
 
 // 单例 DocMiniApp 实例
 let docMiniAppInstance: ReturnType<BlockitClient['initAPI']> | null = null;
@@ -35,7 +36,7 @@ export const useDocsService = () => {
   // 文档模式状态
   const [docsMode, setDocsMode] = useState<DOCS_MODE>(DOCS_MODE.EDITING);
   // 语言设置
-  const [language, setLanguage] = useState<string>('');
+  const [language, setLanguage] = useState<Locale>('zh-CN');
   // 暗色模式
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
   // 初始化完成标志
@@ -56,7 +57,7 @@ export const useDocsService = () => {
         // 并行获取所有初始状态
         const [initialDocsMode, initialLanguage, initialDarkMode] = await Promise.all([
           docMiniApp.Env.DocsMode.getDocsMode().catch(() => DOCS_MODE.EDITING),
-          docMiniApp.Env.Language.getLanguage().catch(() => 'en'),
+          docMiniApp.Env.Language.getLanguage().catch(() => 'zh-CN' as const),
           docMiniApp.Env.DarkMode.getIsDarkMode().catch(() => false)
         ]);
 
@@ -189,6 +190,22 @@ export const useDocsService = () => {
       console.error('[DocsService] Failed to notify app ready:', error);
     }
   }, [docMiniApp]);
+
+  useEffect(() => {
+    const loadCatalog = async (locale: Locale) => {
+      try {
+        if (i18n.locale === locale) return;
+        const { messages } = await import(`../locales/${locale}/messages.po`);
+        i18n.load(locale, messages);
+        i18n.activate(locale);
+        console.log(`[DocsService] Loaded catalog for locale: ${locale}`);
+      } catch (error) {
+        console.error(`Failed to load catalog for locale: ${locale}`, error);
+      }
+    };
+
+    loadCatalog(language as Locale);
+  }, [language]);
 
   return {
     // 状态
