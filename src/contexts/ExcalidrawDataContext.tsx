@@ -9,20 +9,20 @@ import { ExcalidrawData } from '../types';
 // 定义 Context 类型 - 只包含状态，不包含业务逻辑
 interface ExcalidrawDataContextType {
   // 数据状态
-  excalidrawData: ExcalidrawData | null;
+  excalidrawData?: ExcalidrawData;
   isLoadingData: boolean;
   hasExistingData: boolean;
-  title: string | null;
+  title?: string;
 
   // API 状态
-  excalidrawAPI: any;
+  excalidrawAPI?: any;
 
   // 状态更新函数
-  setExcalidrawData: Dispatch<SetStateAction<ExcalidrawData | null>>;
+  setExcalidrawData: Dispatch<SetStateAction<ExcalidrawData | undefined>>;
   setIsLoadingData: Dispatch<SetStateAction<boolean>>;
   setHasExistingData: Dispatch<SetStateAction<boolean>>;
-  setTitle: Dispatch<SetStateAction<string | null>>;
-  setExcalidrawAPI: Dispatch<SetStateAction<any>>;
+  setTitle: Dispatch<SetStateAction<string | undefined>>;
+  setExcalidrawAPI: Dispatch<SetStateAction<any | undefined>>;
 }
 
 // 创建 Context
@@ -34,15 +34,15 @@ const ExcalidrawDataContext = createContext<ExcalidrawDataContextType | null>(nu
  */
 export const ExcalidrawDataProvider = ({ children }: { children: ReactNode }) => {
   // Excalidraw 绘图数据
-  const [excalidrawData, setExcalidrawData] = useState<ExcalidrawData | null>(null);
+  const [excalidrawData, setExcalidrawData] = useState<ExcalidrawData>();
   // 加载状态
   const [isLoadingData, setIsLoadingData] = useState(true);
   // 是否存在已有数据
   const [hasExistingData, setHasExistingData] = useState(false);
   // 图名
-  const [title, setTitle] = useState<string | null>(null);
+  const [title, setTitle] = useState<string>();
   // Excalidraw API 实例
-  const [excalidrawAPI, setExcalidrawAPI] = useState<any>(null);
+  const [excalidrawAPI, setExcalidrawAPI] = useState<any>();
 
   return (
     <ExcalidrawDataContext.Provider

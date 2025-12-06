@@ -4,32 +4,34 @@
 import { useState } from 'react';
 import { useDocsService } from '../../hooks/useDocsService';
 import styles from './TopToolbar.module.css';
-import { useExcalidrawData } from '../../hooks/useExcalidrawData';
 import { t } from '@lingui/core/macro';
+import { useExcalidrawDataContext } from '../../contexts/ExcalidrawDataContext';
 
 interface TopToolbarProps {
   /** 是否处于编辑模式 */
   isEditingMode: boolean;
   /** 切换编辑/查看模式的处理函数 */
-  onToggleEditMode: () => void;
+  setIsEditMode: React.Dispatch<React.SetStateAction<boolean>>;
+  /** 保存数据的函数 */
+  saveData: (data: Partial<{ title: string }>) => Promise<void>;
+  /** 等待所有保存操作完成的函数 */
+  waitForAllSaves: () => Promise<void>;
 }
 
 /**
  * 顶部工具栏组件
  * 提供全屏切换、导出文件、模式切换等功能
  */
-export const TopToolbar = ({ isEditingMode, onToggleEditMode }: TopToolbarProps) => {
+export const TopToolbar = ({ isEditingMode, setIsEditMode, saveData, waitForAllSaves }: TopToolbarProps) => {
   const { toggleFullscreen } = useDocsService();
   const [isEditingTitle, setIsEditingTitle] = useState(false);
-
-  const { title, saveTitle } = useExcalidrawData();
-
+  const { title } = useExcalidrawDataContext();
   const handleTitleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     const text = e.currentTarget.value;
     setIsEditingTitle(false);
     const finalTitle = text.trim() === '' ? t`无名画板` : text;
     e.currentTarget.value = finalTitle;
-    saveTitle(finalTitle);
+    saveData({ title: finalTitle });
   };
 
   const handleTitleFocus = () => {
@@ -64,8 +66,10 @@ export const TopToolbar = ({ isEditingMode, onToggleEditMode }: TopToolbarProps)
       </div>
       <div className={`${styles.modeSwitcher} ${styles.toolbarBtnList}`}>
         <button
-          onClick={(e) => {
+          onClick={async (e) => {
             e.currentTarget.blur();
+            setIsEditMode(false);
+            await waitForAllSaves();
             toggleFullscreen();
           }}
           className={styles.toolbarBtn}
@@ -77,7 +81,7 @@ export const TopToolbar = ({ isEditingMode, onToggleEditMode }: TopToolbarProps)
         <button
           onClick={(e) => {
             e.currentTarget.blur();
-            onToggleEditMode();
+            setIsEditMode((it) => !it);
           }}
           className={`${styles.modeBtn} ${styles.viewBtn}`}
           tabIndex={-1}

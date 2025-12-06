@@ -28,13 +28,5 @@ export const useAddonEditMode = () => {
     }
   }, [isDocsEditMode]);
 
-  /**
-   * 切换编辑/查看模式
-   */
-  const toggleAddonEditMode = () => {
-    if (!isDocsEditMode) throw new Error('Cannot toggle edit mode in read-only document');
-    setAddonIsEditMode((prev) => !prev);
-  };
-
-  return [isAddonEditMode, toggleAddonEditMode] as const;
+  return [isAddonEditMode, setAddonIsEditMode] as const;
 };

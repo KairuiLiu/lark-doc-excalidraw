@@ -1,38 +1,58 @@
-/**
- * Excalidraw 数据管理 Hook
- *
- * 负责 Excalidraw 绘图数据的业务逻辑
- * - 从 Lark 文档存储中加载数据
- * - 自动防抖保存（1秒延迟）
- * - 文件导入/导出
- * - 创建新绘图
- *
- * 使用 Context 中的状态，不创建新状态
- */
-import { useCallback, useRef, useMemo } from 'react';
-import { debounce, omit } from 'es-toolkit';
-import { BlockData } from '../types';
+import { useCallback, useRef, useEffect } from 'react';
+import { delay, isEqual, omit } from 'es-toolkit';
+import { BlockData, ExcalidrawData } from '../types';
 import { useExcalidrawDataContext } from '../contexts/ExcalidrawDataContext';
 import { useDocsService } from './useDocsService';
 
 /**
  * 清理 appState 对象
- * 移除不需要序列化的字段，避免存储问题
+ * 移除不需要序列化的字段，以及不应该跨实例同步的状态
  */
 const cleanAppState = (appState: any) => {
-  return omit(appState, ['collaborators', 'activeEmbeddable', 'contextMenuSize', 'pageSize']);
+  return omit(appState, [
+    // 不可序列化的字段
+    'collaborators',
+    'activeEmbeddable',
+    'contextMenuSize',
+    'pageSize',
+    // 不应该跨实例同步的视图状态
+    'viewModeEnabled',
+    'scrollX',
+    'scrollY',
+    'zoom',
+    'cursorButton',
+    'scrolledOutside',
+    'selectedElementIds',
+    'selectedGroupIds',
+    'editingGroupId',
+    'selectedLinearElementId',
+    'draggingElement',
+    'resizingElement',
+    'multiElement',
+    'selectionElement',
+    'isBindingEnabled',
+    'startBoundElement',
+    'suggestedBindings',
+    'frameToHighlight',
+    'editingElement',
+    'elementsToHighlight'
+  ]);
 };
+
+// 定义等待队列的结构
+interface PendingSave {
+  data: BlockData;
+  resolvers: Array<(value: void) => void>;
+  rejecters: Array<(reason: any) => void>;
+}
 
 /**
  * Excalidraw 数据管理 Hook
  * @returns 数据状态和操作方法
  */
 export const useExcalidrawData = () => {
-  // 从 Context 获取状态
   const {
     excalidrawData,
-    isLoadingData,
-    hasExistingData,
     title,
     setExcalidrawData,
     setIsLoadingData,
@@ -40,129 +60,196 @@ export const useExcalidrawData = () => {
     setTitle
   } = useExcalidrawDataContext();
 
-  // 使用 DocsService 进行数据读写
-  const { loadRecord, saveRecord } = useDocsService();
+  const { loadRecord, saveRecord, notifyReady, docMiniApp } = useDocsService();
 
-  // 待保存的数据引用
-  const pendingSaveDataRef = useRef<{ elements: readonly any[]; appState: any; files: any } | null>(null);
-  const pendingSaveTitleRef = useRef<string | null>(null);
+  // 暂存 buffer
+  const lastModifiedRef = useRef<number>(0);
+  const uuid = useRef<string>();
 
-  /**
-   * 从 Lark 文档存储中加载已有的绘图数据
-   */
-  const loadExistingData = useCallback(async () => {
-    setIsLoadingData(true);
+  // 并发控制 Refs
+  const isUploadingRef = useRef(false);
+  const pendingSaveRef = useRef<PendingSave | null>(null);
+  const flushResolversRef = useRef<(() => void)[]>([]);
 
-    try {
-      // 使用 DocsService 读取数据
-      const recordData = await loadRecord();
+  // 获取外部数据后覆盖本地数据
+  const handleReplaceLocalData = useCallback(
+    (income: BlockData) => {
+      const newLastModified = income?.lastModified;
+      const currentLastModified = lastModifiedRef.current;
+      // 远端数据没有不合法
+      if (!newLastModified) throw new Error('Invalid remote data: missing lastModified');
+      // 远端数据过时
+      if (currentLastModified && newLastModified < currentLastModified)
+        throw new Error('Stale remote data: lastModified is older than local');
 
-      if (recordData?.excalidrawData) {
-        const loadedData = recordData.excalidrawData;
-        // 恢复 collaborators Map（保存时被移除）
-        if (loadedData.appState) {
-          loadedData.appState.collaborators = new Map();
-        }
-        setExcalidrawData(loadedData);
+      // 更新修改时间
+      lastModifiedRef.current = newLastModified;
+      uuid.current = income?.uuid;
+
+      // 更新视图数据
+      setExcalidrawData((prev) => {
+        if (!income.excalidrawData || isEqual(prev, income.excalidrawData)) return prev;
         setHasExistingData(true);
-        // 加载 title
-        if (recordData.title) {
-          setTitle(recordData.title);
-        }
-      } else {
-        // 没有数据，设置为空状态
-        setExcalidrawData(null);
-        setHasExistingData(false);
-      }
-    } catch (error) {
-      console.error('Failed to load from Lark Record API:', error);
-      // 加载失败，设置为空状态
-      setExcalidrawData(null);
-      setHasExistingData(false);
-    } finally {
-      setIsLoadingData(false);
-    }
-  }, [loadRecord, setIsLoadingData, setExcalidrawData, setHasExistingData, setTitle]);
-
-  /**
-   * 执行实际的保存操作
-   * 将数据保存到 Lark 文档存储
-   */
-  const performSave = useCallback(async () => {
-    // 如果既没有待保存的数据，也没有待保存的 title，直接返回
-    if (!pendingSaveDataRef.current && !pendingSaveTitleRef.current) return;
-
-    // 使用待保存的数据，或者当前的数据
-    const { elements, appState, files } = pendingSaveDataRef.current ||
-      excalidrawData || {
-        elements: [],
-        appState: {},
-        files: {}
-      };
-
-    const dataToSave: BlockData = {
-      excalidrawData: {
-        elements,
-        appState: cleanAppState(appState),
-        files
-      },
-      lastModified: new Date().toISOString(),
-      title: pendingSaveTitleRef.current || title || undefined
-    };
-
-    try {
-      // 使用 DocsService 保存数据
-      await saveRecord(dataToSave);
-      pendingSaveDataRef.current = null;
-      pendingSaveTitleRef.current = null;
-    } catch (error) {
-      console.error('Failed to save to Lark Record API:', error);
-    }
-  }, [saveRecord, title, excalidrawData]);
-
-  /**
-   * 创建防抖版本的 performSave
-   * 使用 es-toolkit 的 debounce，1 秒延迟
-   */
-  const debouncedSave = useMemo(() => debounce(performSave, 1000), [performSave]);
-
-  /**
-   * 保存 Excalidraw 数据（带防抖）
-   * 使用 1 秒防抖避免频繁保存
-   */
-  const saveExcalidrawData = useCallback(
-    (elements: readonly any[], appState: any, files?: any, flush?: boolean) => {
-      pendingSaveDataRef.current = { elements, appState, files: files || {} };
-      if (flush) {
-        debouncedSave.cancel();
-        performSave();
-      } else {
-        debouncedSave();
-      }
+        return income.excalidrawData;
+      });
+      setTitle((prev) => income.title || prev);
     },
-    [debouncedSave, performSave]
+    [setTitle, setHasExistingData, setExcalidrawData]
   );
 
-  const flushPendingData = useCallback(() => {
-    debouncedSave.cancel();
-    performSave();
-  }, [debouncedSave, performSave]);
+  // 初始化时, 从 Lark 文档存储加载已有数据
+  useEffect(() => {
+    const initializeComponent = async () => {
+      // TODO 有什么用
+      setIsLoadingData(true);
+      try {
+        const income = await loadRecord();
+        if (income) handleReplaceLocalData(income);
+        notifyReady();
+      } catch (error) {
+        console.error('Failed to load from Lark Record API:', error);
+      } finally {
+        setIsLoadingData(false);
+      }
+    };
+
+    initializeComponent();
+  }, []);
+
+  // 从远端订阅数据覆盖本地数据
+  useEffect(() => {
+    docMiniApp.Record.onRecordChange(handleReplaceLocalData);
+    return () => {
+      docMiniApp.Record.offRecordChange(handleReplaceLocalData);
+    };
+  }, [docMiniApp, handleReplaceLocalData]);
 
   /**
-   * 保存 title
+   * 实际执行保存的原子操作
+   * 包含 api 调用和 300ms 延迟
    */
-  const saveTitle = (newTitle: string) => {
-    setTitle((prev) => {
-      if (prev === newTitle) return prev;
-      pendingSaveTitleRef.current = newTitle;
-      debouncedSave();
-      return newTitle;
+  const performSave = useCallback(
+    async (data: BlockData) => {
+      try {
+        await saveRecord(data);
+        // 强制等待 300ms，防止请求过于频繁
+        await delay(300);
+      } catch (error) {
+        console.error('Failed to save to Lark Record API:', error);
+        throw error;
+      }
+    },
+    [saveRecord]
+  );
+
+  /**
+   * 处理队列循环
+   * 当一个上传任务完成后，检查是否有等待的任务
+   */
+  const processQueue = useCallback(async () => {
+    // 只要等待区有数据，就一直循环处理
+    while (pendingSaveRef.current) {
+      // 1. 取出当前最新的等待数据和所有相关的 promises
+      const { data, resolvers, rejecters } = pendingSaveRef.current;
+
+      // 2. 立即清空等待区 (这样在本次上传期间产生的新请求会形成新的 pending)
+      pendingSaveRef.current = null;
+
+      try {
+        // 3. 执行上传
+        await performSave(data);
+        // 4. 成功：通知所有等待这个批次的调用者
+        resolvers.forEach((resolve) => resolve());
+      } catch (error) {
+        // 5. 失败：拒绝所有等待这个批次的调用者
+        rejecters.forEach((reject) => reject(error));
+      }
+    }
+
+    // 队列处理完毕，标记为空闲
+    isUploadingRef.current = false;
+    if (flushResolversRef.current.length > 0) {
+      flushResolversRef.current.forEach((resolve) => resolve());
+      flushResolversRef.current = []; // 清空监听列表
+    }
+  }, [performSave]);
+
+  /**
+   * 核心保存逻辑
+   * 1. 立即更新本地状态 (Optimistic UI)
+   * 2. 控制并发上传逻辑
+   */
+  const saveData = useCallback(
+    async (income: Partial<BlockData>) => {
+      const localData = {
+        lastModified: Date.now(),
+        uuid: uuid.current,
+        excalidrawData,
+        title
+      };
+
+      const newData: BlockData = {
+        ...localData,
+        ...income
+      };
+
+      // 清理 appState
+      if (newData.excalidrawData?.appState) {
+        newData.excalidrawData.appState = cleanAppState(newData.excalidrawData.appState);
+      }
+
+      // 1. 如果数据没有变化，直接返回
+      if (isEqual(localData, newData)) return;
+
+      // 2. 立即更新本地 Ref 和视图（防止用户感知回退）
+      handleReplaceLocalData(newData);
+
+      // 3. 上传队列逻辑
+      return new Promise<void>((resolve, reject) => {
+        if (isUploadingRef.current) {
+          if (!pendingSaveRef.current) {
+            pendingSaveRef.current = {
+              data: newData,
+              resolvers: [],
+              rejecters: []
+            };
+          } else {
+            pendingSaveRef.current.data = newData;
+          }
+          pendingSaveRef.current.resolvers.push(resolve);
+          pendingSaveRef.current.rejecters.push(reject);
+        } else {
+          isUploadingRef.current = true;
+
+          performSave(newData)
+            .then(() => {
+              resolve();
+              processQueue();
+            })
+            .catch((err) => {
+              reject(err);
+              processQueue();
+            });
+        }
+      });
+    },
+    [excalidrawData, title, handleReplaceLocalData, performSave, processQueue]
+  );
+
+  const waitForAllSaves = useCallback(async () => {
+    // 如果当前没在上传，直接完成
+    if (!isUploadingRef.current) {
+      return;
+    }
+
+    // 如果正在上传，返回一个 Promise，并将 resolve 句柄交给 processQueue 在结束后调用
+    return new Promise<void>((resolve) => {
+      flushResolversRef.current.push(resolve);
     });
-  };
+  }, []);
 
   /**
    * 处理文件上传
-   * 支持上传 .excalidraw 和 .json 格式的文件
    */
   const handleFileUpload = useCallback(
     async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -172,65 +259,64 @@ export const useExcalidrawData = () => {
       try {
         setIsLoadingData(true);
         const text = await file.text();
-        const data = JSON.parse(text);
+        const fileData = JSON.parse(text) as ExcalidrawData;
 
-        // 验证文件格式（必须包含 type 或 elements 字段）
-        if (data.type === 'excalidraw' || data.elements) {
-          const excalidrawData = {
-            elements: data.elements || [],
-            appState: {
-              ...data.appState,
-              collaborators: new Map()
-            }
-          };
+        const excalidrawData: ExcalidrawData = {
+          elements: fileData.elements || [],
+          appState: cleanAppState(fileData.appState),
+          files: fileData.files
+        };
+        const uuid = crypto.randomUUID();
+        const lastModified = Date.now();
 
-          setExcalidrawData(excalidrawData);
-          setHasExistingData(true);
+        // 待保存的数据
+        const data = {
+          excalidrawData,
+          uuid,
+          lastModified,
+          title: undefined
+        };
 
-          // 保存上传的数据
-          saveExcalidrawData(
-            excalidrawData.elements,
-            excalidrawData.appState,
-            (excalidrawData as any).files || {},
-            true
-          );
-        }
+        await saveData(data);
       } catch (error) {
         console.error('Error parsing uploaded file:', error);
       } finally {
         setIsLoadingData(false);
       }
     },
-    [setIsLoadingData, setExcalidrawData, setHasExistingData, saveExcalidrawData]
+    [setIsLoadingData, saveData]
   );
 
   /**
    * 创建新的空白绘图
    */
-  const createNewDrawing = useCallback(() => {
-    const newData = {
+  const createNewDrawing = useCallback(async () => {
+    const excalidrawData = {
       elements: [],
       appState: {
         collaborators: new Map()
       },
       files: {}
     };
-    setExcalidrawData(newData);
-    setHasExistingData(true);
+    const uuid = crypto.randomUUID();
+    const lastModified = Date.now();
 
-    saveExcalidrawData(newData.elements, newData.appState, newData.files, true);
-  }, [setExcalidrawData, setHasExistingData, saveExcalidrawData]);
+    // 待保存的数据
+    const data = {
+      excalidrawData,
+      uuid,
+      lastModified,
+      title: undefined
+    };
+
+    // 写入并同步
+    await saveData(data);
+  }, [saveData]);
 
   return {
-    excalidrawData,
-    isLoadingData,
-    hasExistingData,
-    title,
-    loadExistingData,
-    saveExcalidrawData,
-    saveTitle,
     handleFileUpload,
     createNewDrawing,
-    flushPendingData
+    saveData,
+    waitForAllSaves
   };
 };

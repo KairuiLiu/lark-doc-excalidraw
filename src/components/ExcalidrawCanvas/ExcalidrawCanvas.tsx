@@ -6,12 +6,14 @@
  * - 自动保存
  * - 处理鼠标拖拽边界问题
  */
-import { useRef, useEffect, useCallback } from 'react';
+import { useRef, useEffect, useCallback, useMemo } from 'react';
 import { Excalidraw } from '@excalidraw/excalidraw';
+import { debounce } from 'es-toolkit';
 import styles from './ExcalidrawCanvas.module.css';
-import { useExcalidrawData } from '../../hooks/useExcalidrawData';
 import { useExcalidrawDataContext } from '../../contexts/ExcalidrawDataContext';
 import { useDocsService } from '../../hooks/useDocsService';
+import { useAutoZoom } from '../../hooks/useAutoZoom';
+import { BlockData } from '../../types';
 
 /**
  * Excalidraw 画布组件的属性
@@ -21,30 +23,89 @@ interface ExcalidrawCanvasProps {
   isEditingMode: boolean;
   /** 是否为暗色模式 */
   isDarkMode: boolean;
+  /** 保存数据的函数 */
+  saveData: (data: Partial<BlockData>) => Promise<void>;
 }
 
 /**
  * Excalidraw 画布组件
  * 包装 Excalidraw 编辑器并处理相关事件
  */
-export const ExcalidrawCanvas = ({ isEditingMode, isDarkMode }: ExcalidrawCanvasProps) => {
-  const { saveExcalidrawData, excalidrawData } = useExcalidrawData();
-  const { setExcalidrawAPI } = useExcalidrawDataContext();
+export const ExcalidrawCanvas = ({ isEditingMode, isDarkMode, saveData }: ExcalidrawCanvasProps) => {
+  const { excalidrawData, setExcalidrawAPI, excalidrawAPI } = useExcalidrawDataContext();
   const { notifyReady } = useDocsService();
   const { language } = useDocsService();
   const excalidrawWrapperRef = useRef<HTMLDivElement | null>(null);
+  const isUpdatingFromSyncRef = useRef(false);
+  useAutoZoom(isEditingMode);
+
+  // 稳定的 initialData 引用，只在首次渲染时设置
+  const initialDataRef = useRef(
+    excalidrawData || {
+      elements: [],
+      appState: { collaborators: new Map() },
+      files: {}
+    }
+  );
   /**
    * 处理 Excalidraw 内容变化
    * 仅在编辑模式下触发保存
    */
-  const handleExcalidrawChange = useCallback(
+  const handleExcalidrawChangeRaw = useCallback(
     (elements: readonly any[], appState: any, files: any) => {
-      if (isEditingMode) {
-        saveExcalidrawData(elements, appState, files);
+      // 如果是从同步更新的，不触发保存（避免循环）
+      if (isUpdatingFromSyncRef.current) {
+        return;
       }
+      saveData({ excalidrawData: { elements, appState, files } });
     },
-    [isEditingMode, saveExcalidrawData]
+    [saveData]
   );
+
+  // 对 onChange 进行防抖，避免频繁触发保存
+  const handleExcalidrawChange = useMemo(
+    () => debounce(handleExcalidrawChangeRaw, 300),
+    [handleExcalidrawChangeRaw]
+  );
+
+  /**
+   * 监听 excalidrawData 变化，通过 API 更新画布
+   * 这样可以响应来自其他实例的数据变化
+   *
+   * 注意：同步的 appState 已经通过 cleanAppState 移除了不应该同步的字段
+   * （如 viewModeEnabled, scrollX/Y, zoom, 选中状态等），
+   * 所以这里可以直接应用，不会影响当前实例的视图状态
+   */
+  useEffect(() => {
+    if (!excalidrawAPI || !excalidrawData) return;
+
+    // 标记正在从同步更新，防止触发 onChange
+    isUpdatingFromSyncRef.current = true;
+    console.log('🔄 [Sync] Starting canvas update, blocking onChange');
+
+    try {
+      excalidrawAPI.updateScene({
+        elements: excalidrawData.elements,
+        appState: excalidrawData.appState,
+        ...(excalidrawData.files && { files: excalidrawData.files })
+      });
+      console.log('✅ [Sync] Canvas updated with new data');
+    } catch (error) {
+      console.error('Failed to update canvas:', error);
+      // 出错时立即重置标志
+      isUpdatingFromSyncRef.current = false;
+      return;
+    }
+
+    // 使用 requestAnimationFrame 来在下一帧重置标志
+    // 这样可以确保 Excalidraw 的所有同步更新都完成，同时不会阻塞太久
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        isUpdatingFromSyncRef.current = false;
+        console.log('✅ [Sync] Update complete, onChange unblocked');
+      });
+    });
+  }, [excalidrawAPI, excalidrawData]);
 
   /**
    * 处理鼠标离开画布区域
@@ -125,7 +186,7 @@ export const ExcalidrawCanvas = ({ isEditingMode, isDarkMode }: ExcalidrawCanvas
           notifyReady();
           setExcalidrawAPI(it);
         }}
-        initialData={excalidrawData || { elements: [], appState: { collaborators: new Map() }, files: {} }}
+        initialData={initialDataRef.current}
         viewModeEnabled={!isEditingMode}
         onChange={handleExcalidrawChange}
         theme={isDarkMode ? 'dark' : 'light'}

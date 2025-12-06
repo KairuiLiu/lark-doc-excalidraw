@@ -135,7 +135,10 @@ const config = {
     },
     optimization: {
         minimize: isProduction,
-        minimizer: [new ESBuildMinifyPlugin({ target: 'es2015', css: true })],
+        minimizer: [new ESBuildMinifyPlugin({
+            target: 'es2015', css: true,
+            drop: isProduction ? ['console'] : [],
+        })],
         moduleIds: 'deterministic',
         runtimeChunk: true,
         splitChunks: {

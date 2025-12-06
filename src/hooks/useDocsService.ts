@@ -169,7 +169,7 @@ export const useDocsService = () => {
   }, [docMiniApp]);
 
   /**
-   * 切换全屏模式
+   * 切换全屏模式 (飞书的逆天 API)
    */
   const toggleFullscreen = useCallback(async () => {
     try {

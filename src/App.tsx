@@ -14,36 +14,27 @@ import { useAddonEditMode } from './hooks/useAddonEditMode';
 import { DOCS_MODE } from '@lark-opdev/block-docs-addon-api';
 import { useExcalidrawData } from './hooks/useExcalidrawData';
 import { useDocsService } from './hooks/useDocsService';
-import { useAppLifecycle } from './hooks/useAppLifecycle';
 import { EmptyStateView } from './components/EmptyStateView/EmptyStateView';
 import { TopToolbar } from './components/TopToolbar/TopToolbar';
 import { ExcalidrawCanvas } from './components/ExcalidrawCanvas/ExcalidrawCanvas';
-import { useAutoZoom } from './hooks/useAutoZoom';
 import { t } from '@lingui/core/macro';
+import { useHotKey } from './hooks/useHotKey';
+import { useExcalidrawDataContext } from './contexts/ExcalidrawDataContext';
 
 /**
  * 应用主组件
  */
 export default () => {
-  const {
-    isLoadingData,
-    hasExistingData,
-    loadExistingData,
-    flushPendingData,
-    handleFileUpload,
-    createNewDrawing
-  } = useExcalidrawData();
-  const { docsMode } = useDocsService();
+  const { handleFileUpload, createNewDrawing, saveData, waitForAllSaves } = useExcalidrawData();
+  const { isLoadingData, hasExistingData } = useExcalidrawDataContext();
+  const { docsMode, isDarkMode } = useDocsService();
   const isDocsEditMode = docsMode === DOCS_MODE.EDITING;
-  const [isAddonEditMode, toggleAddonEditMode] = useAddonEditMode();
-  const { containerRef } = useAppLifecycle(loadExistingData, flushPendingData);
-  const { isDarkMode } = useDocsService();
-  useAutoZoom(isAddonEditMode);
+  const [isAddonEditMode, setAddonEditMode] = useAddonEditMode();
+  useHotKey();
 
   return (
     <div
       id="lark-docs-excalidraw-container"
-      ref={containerRef}
       className="excalidraw-container"
       data-theme={isDarkMode ? 'dark' : 'light'}
     >
@@ -52,10 +43,14 @@ export default () => {
       {!isLoadingData && hasExistingData && (
         <>
           {isDocsEditMode && (
-            <TopToolbar isEditingMode={isAddonEditMode} onToggleEditMode={toggleAddonEditMode} />
+            <TopToolbar
+              saveData={saveData}
+              isEditingMode={isAddonEditMode}
+              setIsEditMode={setAddonEditMode}
+              waitForAllSaves={waitForAllSaves}
+            />
           )}
-
-          <ExcalidrawCanvas isEditingMode={isAddonEditMode} isDarkMode={isDarkMode} />
+          <ExcalidrawCanvas isEditingMode={isAddonEditMode} isDarkMode={isDarkMode} saveData={saveData} />
         </>
       )}
     </div>
