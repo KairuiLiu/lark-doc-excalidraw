@@ -6,9 +6,9 @@
  * - 自动保存
  * - 处理鼠标拖拽边界问题
  */
-import { useRef, useEffect, useCallback, useMemo } from 'react';
+import { useRef, useEffect, useCallback, useMemo, useState } from 'react';
 import { Excalidraw } from '@excalidraw/excalidraw';
-import { debounce } from 'es-toolkit';
+import { debounce, isEqual } from 'es-toolkit';
 import styles from './ExcalidrawCanvas.module.css';
 import { useExcalidrawDataContext } from '../../contexts/ExcalidrawDataContext';
 import { useDocsService } from '../../hooks/useDocsService';
@@ -57,6 +57,7 @@ export const ExcalidrawCanvas = ({ isEditingMode, isDarkMode, saveData }: Excali
       if (isUpdatingFromSyncRef.current) {
         return;
       }
+      console.log('🖌️ [ExcalidrawCanvas] onChange triggered, saving data...');
       saveData({ excalidrawData: { elements, appState, files } });
     },
     [saveData]
@@ -81,12 +82,36 @@ export const ExcalidrawCanvas = ({ isEditingMode, isDarkMode, saveData }: Excali
 
     // 标记正在从同步更新，防止触发 onChange
     isUpdatingFromSyncRef.current = true;
-    console.log('🔄 [Sync] Starting canvas update, blocking onChange');
 
     try {
+      const currentAppState = excalidrawAPI.getAppState();
+      const currentElements = excalidrawAPI.getSceneElements();
+      const currentFiles = excalidrawAPI.getFiles();
+
+      // 对比是否有必要更新
+      let anyDiff = false;
+      if (
+        !isEqual(
+          currentElements.toSorted((a, b) => a.id.localeCompare(b.id)),
+          excalidrawData.elements.toSorted((a, b) => a.id.localeCompare(b.id))
+        )
+      ) {
+        console.log('### element changed');
+        anyDiff = true;
+      }
+      if (!isEqual(currentAppState, { ...currentAppState, ...excalidrawData.appState })) {
+        console.log('### AppState changed');
+        anyDiff = true;
+      }
+      if (!isEqual(currentFiles, excalidrawData.files)) {
+        console.log('### File Changed');
+        anyDiff = true;
+      }
+      if (!anyDiff) return;
+
       excalidrawAPI.updateScene({
         elements: excalidrawData.elements,
-        appState: excalidrawData.appState,
+        appState: { ...currentAppState, ...excalidrawData.appState },
         ...(excalidrawData.files && { files: excalidrawData.files })
       });
       console.log('✅ [Sync] Canvas updated with new data');
@@ -102,7 +127,6 @@ export const ExcalidrawCanvas = ({ isEditingMode, isDarkMode, saveData }: Excali
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         isUpdatingFromSyncRef.current = false;
-        console.log('✅ [Sync] Update complete, onChange unblocked');
       });
     });
   }, [excalidrawAPI, excalidrawData]);

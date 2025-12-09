@@ -5,6 +5,7 @@
  */
 import { createContext, useContext, ReactNode, useState, Dispatch, SetStateAction } from 'react';
 import { ExcalidrawData } from '../types';
+import { ExcalidrawImperativeAPI } from '@excalidraw/excalidraw/types/types';
 
 // 定义 Context 类型 - 只包含状态，不包含业务逻辑
 interface ExcalidrawDataContextType {
@@ -15,14 +16,14 @@ interface ExcalidrawDataContextType {
   title?: string;
 
   // API 状态
-  excalidrawAPI?: any;
+  excalidrawAPI?: ExcalidrawImperativeAPI;
 
   // 状态更新函数
   setExcalidrawData: Dispatch<SetStateAction<ExcalidrawData | undefined>>;
   setIsLoadingData: Dispatch<SetStateAction<boolean>>;
   setHasExistingData: Dispatch<SetStateAction<boolean>>;
   setTitle: Dispatch<SetStateAction<string | undefined>>;
-  setExcalidrawAPI: Dispatch<SetStateAction<any | undefined>>;
+  setExcalidrawAPI: Dispatch<SetStateAction<ExcalidrawImperativeAPI | undefined>>;
 }
 
 // 创建 Context
