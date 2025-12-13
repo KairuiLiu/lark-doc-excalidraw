@@ -1,9 +1,9 @@
-# <img src="/static/favicon.svg" alt="Excalidraw Logo" style="width:24px; height:24px;"/>Lark Docs Excalidraw Add-on
+# Lark Docs Excalidraw Add-on
 
 一个集成了 [Excalidraw](https://excalidraw.com/) 绘图功能的飞书文档插件, 让你可以在飞书文档中直接创建和编辑 Excalidraw 图形.
 
 <div style="text-align:center;">
-<img src="/static/doodlez.png" alt="Screenshot" style="width:100%; max-width:800px; border:1px solid #eee; box-shadow:0 2px 8px rgba(0,0,0,0.1); margin-top:16px;"/>
+<img src="/static/doodlez.png" alt="Screenshot" style="max-width:800px; border:1px solid #eee; box-shadow:0 2px 8px rgba(0,0,0,0.1); margin-top:16px;"/>
 </div>
 
 > **关于上架**: 为全员上架飞书文档插件需要你找到你上级的上级审批, 并出具安全评估报告, 甚至 "视情况加签至CEO-2". (是的, Chrome 插件商店 = Google 审核, App Store = Apple 审核, 飞书插件 = 你老板审核. 简直就是降本增效的典范).  
