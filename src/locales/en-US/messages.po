@@ -21,7 +21,7 @@ msgstr "Excalidraw Drawing"
 msgid "上传 Excalidraw 文件"
 msgstr "Upload Excalidraw File"
 
-#: src/components/TopToolbar/TopToolbar.tsx:74
+#: src/components/TopToolbar/TopToolbar.tsx:90
 msgid "切换全屏"
 msgstr "Toggle Fullscreen"
 
@@ -29,20 +29,20 @@ msgstr "Toggle Fullscreen"
 msgid "创建新绘图"
 msgstr "Create New Drawing"
 
-#: src/App.tsx:50
+#: src/App.tsx:41
 msgid "数据加载中"
 msgstr "Loading data"
 
-#: src/components/TopToolbar/TopToolbar.tsx:30
-#: src/components/TopToolbar/TopToolbar.tsx:62
+#: src/components/TopToolbar/TopToolbar.tsx:32
+#: src/components/TopToolbar/TopToolbar.tsx:76
 msgid "无名画板"
 msgstr "Untitled Board"
 
-#: src/components/TopToolbar/TopToolbar.tsx:85
+#: src/components/TopToolbar/TopToolbar.tsx:101
 msgid "查看模式"
 msgstr "View Mode"
 
-#: src/components/TopToolbar/TopToolbar.tsx:85
+#: src/components/TopToolbar/TopToolbar.tsx:101
 msgid "编辑模式"
 msgstr "Edit Mode"
 
