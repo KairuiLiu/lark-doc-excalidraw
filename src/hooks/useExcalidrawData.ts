@@ -75,12 +75,11 @@ export const useExcalidrawData = () => {
         }
 
         setHasExistingData(true);
-        // 深拷贝数据，避免外部修改污染 context
-        return structuredClone({
+        return {
           elements: income.excalidrawData?.elements || [],
           appState: { ...prev?.appState, ...cleanAppState(income.excalidrawData?.appState) },
           files: income.excalidrawData?.files || {}
-        });
+        };
       });
       setTitle((prev) => income.title || prev);
     },
@@ -190,15 +189,17 @@ export const useExcalidrawData = () => {
         title
       };
 
-      console.log('current excalidrawData:', structuredClone(excalidrawData?.elements));
+      console.log('current excalidrawData:', excalidrawData?.elements);
 
-      // elements 会复用 elements
-      const newData: BlockData = structuredClone({
+      const newData: BlockData = {
         ...localData,
-        ...incomeCopy
-      });
+        ...incomeCopy,
+        // 如果 income 没有提供 excalidrawData，则深拷贝 localData 的 excalidrawData
+        // 防止后续修改（如 cleanAppState）影响 context 中的原始数据
+        excalidrawData: incomeCopy.excalidrawData ?? (excalidrawData ? structuredClone(excalidrawData) : undefined)
+      };
 
-      console.log("income excalidrawData:", structuredClone(incomeCopy.excalidrawData?.elements));
+      console.log("income excalidrawData:", incomeCopy.excalidrawData?.elements);
 
       // 清理 appState
       if (newData.excalidrawData?.appState) {

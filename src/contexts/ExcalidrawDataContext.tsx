@@ -39,15 +39,12 @@ export const ExcalidrawDataProvider = ({ children }: { children: ReactNode }) =>
   const [excalidrawData, setExcalidrawData] = useState<ExcalidrawData>();
   // 包装 setExcalidrawData, 所有传入都会被深拷贝
   const setExcalidrawDataPatch = (
-    data: ExcalidrawData | ((prev: ExcalidrawData | undefined) => ExcalidrawData | undefined)
+    data: ExcalidrawData | undefined | ((prev: ExcalidrawData | undefined) => ExcalidrawData | undefined)
   ) => {
     setExcalidrawData((prev) => {
-      // prev 是干净的原始数据
-      // prevClone 是深拷贝的 prev, 可能会被修改
-      const prevClone = structuredClone(prev);
-      // 计算 income
-      const income = typeof data === 'function' ? data(prevClone) : data;
-      // 防止外部对 data 变量修改
+      // 计算 income - 直接传 prev，因为我们的代码不会修改它
+      const income = typeof data === 'function' ? data(prev) : data;
+      // 防止外部对 data 变量修改，深拷贝返回值
       const incomeClone = structuredClone(income);
       // 确实相同则返回纯净的 prev
       if (isEqual(prev, incomeClone)) {
