@@ -1,7 +1,10 @@
+import { ExcalidrawElement } from '@excalidraw/excalidraw/types/element/types';
+import type { AppState, BinaryFiles } from '@excalidraw/excalidraw/types/types';
+
 export interface ExcalidrawData {
-  elements: readonly any[];
-  appState: any;
-  files?: any;
+  elements: readonly ExcalidrawElement[];
+  appState: Partial<AppState>;
+  files?: BinaryFiles;
 }
 
 export interface BlockData {

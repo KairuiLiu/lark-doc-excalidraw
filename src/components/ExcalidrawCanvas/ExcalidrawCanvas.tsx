@@ -6,14 +6,18 @@
  * - 自动保存
  * - 处理鼠标拖拽边界问题
  */
-import { useRef, useEffect, useCallback, useMemo, useState } from 'react';
+import { useRef, useEffect, useCallback, useMemo } from 'react';
 import { Excalidraw } from '@excalidraw/excalidraw';
-import { debounce, isEqual } from 'es-toolkit';
+import { debounce } from 'es-toolkit';
 import styles from './ExcalidrawCanvas.module.css';
 import { useExcalidrawDataContext } from '../../contexts/ExcalidrawDataContext';
 import { useDocsService } from '../../hooks/useDocsService';
 import { useAutoZoom } from '../../hooks/useAutoZoom';
 import { BlockData } from '../../types';
+import { compareExcalidrawData } from '../../utils/dataCompare';
+import { isInteractionInProgress } from '../../utils/interaction';
+import { ExcalidrawElement } from '@excalidraw/excalidraw/types/element/types';
+import { AppState, BinaryFiles } from '@excalidraw/excalidraw/types/types';
 
 /**
  * Excalidraw 画布组件的属性
@@ -36,29 +40,49 @@ export const ExcalidrawCanvas = ({ isEditingMode, isDarkMode, saveData }: Excali
   const { notifyReady } = useDocsService();
   const { language } = useDocsService();
   const excalidrawWrapperRef = useRef<HTMLDivElement | null>(null);
-  const isUpdatingFromSyncRef = useRef(false);
+  const syncLock = useRef(false);
   useAutoZoom(isEditingMode);
 
   // 稳定的 initialData 引用，只在首次渲染时设置
+  // 必须深拷贝，防止 Excalidraw 修改原始数据
   const initialDataRef = useRef(
-    excalidrawData || {
+    excalidrawData ? structuredClone(excalidrawData) : {
       elements: [],
       appState: { collaborators: new Map() },
       files: {}
     }
   );
   /**
+   * 检查是否有正在进行的交互操作
+   * 如果有，则不应该保存数据，避免打断用户操作
+   */
+
+  /**
    * 处理 Excalidraw 内容变化
    * 仅在编辑模式下触发保存
    */
   const handleExcalidrawChangeRaw = useCallback(
-    (elements: readonly any[], appState: any, files: any) => {
-      // 如果是从同步更新的，不触发保存（避免循环）
-      if (isUpdatingFromSyncRef.current) {
+    (elements: readonly ExcalidrawElement[], appState: AppState, files: BinaryFiles) => {
+      console.log('🖌️ [ExcalidrawCanvas] onChange triggered, saving data...');
+      if (syncLock.current) return;
+
+      // 检查是否有正在进行的交互操作
+      if (isInteractionInProgress(appState)) {
+        console.log('⏸️ [ExcalidrawCanvas] Interaction in progress, skipping save');
         return;
       }
-      console.log('🖌️ [ExcalidrawCanvas] onChange triggered, saving data...');
-      saveData({ excalidrawData: { elements, appState, files } });
+
+      syncLock.current = true;
+      console.log('[🔐] syncLock = true');
+      console.log('🖌️ [ExcalidrawCanvas] request saving data...');
+      try {
+        saveData({ excalidrawData: { elements, appState, files } });
+      } finally {
+        requestAnimationFrame(() => {
+          syncLock.current = false;
+          console.log('[🔓] syncLock = false');
+        });
+      }
     },
     [saveData]
   );
@@ -78,57 +102,52 @@ export const ExcalidrawCanvas = ({ isEditingMode, isDarkMode, saveData }: Excali
    * 所以这里可以直接应用，不会影响当前实例的视图状态
    */
   useEffect(() => {
-    if (!excalidrawAPI || !excalidrawData) return;
+    if (!excalidrawAPI || !excalidrawData || syncLock.current) return;
 
-    // 标记正在从同步更新，防止触发 onChange
-    isUpdatingFromSyncRef.current = true;
+    const currentAppState = excalidrawAPI.getAppState();
+
+    // 检查是否有正在进行的交互操作，如果有则跳过同步
+    if (isInteractionInProgress(currentAppState)) {
+      console.log('⏸️ [Sync] Interaction in progress, skipping remote sync');
+      return;
+    }
+
+    syncLock.current = true;
+    console.log('[🔐] syncLock = true');
 
     try {
-      const currentAppState = excalidrawAPI.getAppState();
-      const currentElements = excalidrawAPI.getSceneElements();
-      const currentFiles = excalidrawAPI.getFiles();
+      const currentData = {
+        elements: excalidrawAPI.getSceneElements(),
+        appState: currentAppState,
+        files: excalidrawAPI.getFiles()
+      };
+      const comparison = compareExcalidrawData(currentData, excalidrawData, undefined, true);
+      if (comparison.isEqual) {
+        console.log('⏭️ [Sync] Data unchanged, skipping update');
+        return;
+      }
+      if (comparison.elementsChanged) console.log('⏭️ [Sync]  Elements changed');
+      if (comparison.appStateChanged) console.log('⏭️ [Sync]  AppState changed');
+      if (comparison.filesChanged) console.log('⏭️ [Sync]  Files changed');
 
-      // 对比是否有必要更新
-      let anyDiff = false;
-      if (
-        !isEqual(
-          currentElements.toSorted((a, b) => a.id.localeCompare(b.id)),
-          excalidrawData.elements.toSorted((a, b) => a.id.localeCompare(b.id))
-        )
-      ) {
-        console.log('### element changed');
-        anyDiff = true;
-      }
-      if (!isEqual(currentAppState, { ...currentAppState, ...excalidrawData.appState })) {
-        console.log('### AppState changed');
-        anyDiff = true;
-      }
-      if (!isEqual(currentFiles, excalidrawData.files)) {
-        console.log('### File Changed');
-        anyDiff = true;
-      }
-      if (!anyDiff) return;
-
+      // 合并 appState 时保留本地的交互状态和工具状态
+      // excalidrawData.appState 已经通过 cleanAppState 清理，不包含这些字段
+      // 所以直接合并会保留本地的这些状态
+      // 注意：必须深拷贝 elements，否则 Excalidraw 会直接修改 context 中的数据
       excalidrawAPI.updateScene({
-        elements: excalidrawData.elements,
-        appState: { ...currentAppState, ...excalidrawData.appState },
-        ...(excalidrawData.files && { files: excalidrawData.files })
+        elements: structuredClone(excalidrawData.elements),
+        appState: { ...currentData.appState, ...excalidrawData.appState },
+        ...(excalidrawData.files && { files: structuredClone(excalidrawData.files) })
       });
       console.log('✅ [Sync] Canvas updated with new data');
     } catch (error) {
       console.error('Failed to update canvas:', error);
-      // 出错时立即重置标志
-      isUpdatingFromSyncRef.current = false;
-      return;
-    }
-
-    // 使用 requestAnimationFrame 来在下一帧重置标志
-    // 这样可以确保 Excalidraw 的所有同步更新都完成，同时不会阻塞太久
-    requestAnimationFrame(() => {
+    } finally {
       requestAnimationFrame(() => {
-        isUpdatingFromSyncRef.current = false;
+        syncLock.current = false;
+        console.log('[🔓] syncLock = false');
       });
-    });
+    }
   }, [excalidrawAPI, excalidrawData]);
 
   /**

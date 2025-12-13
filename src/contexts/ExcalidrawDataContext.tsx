@@ -6,6 +6,7 @@
 import { createContext, useContext, ReactNode, useState, Dispatch, SetStateAction } from 'react';
 import { ExcalidrawData } from '../types';
 import { ExcalidrawImperativeAPI } from '@excalidraw/excalidraw/types/types';
+import { isEqual } from 'es-toolkit';
 
 // 定义 Context 类型 - 只包含状态，不包含业务逻辑
 interface ExcalidrawDataContextType {
@@ -36,6 +37,26 @@ const ExcalidrawDataContext = createContext<ExcalidrawDataContextType | null>(nu
 export const ExcalidrawDataProvider = ({ children }: { children: ReactNode }) => {
   // Excalidraw 绘图数据
   const [excalidrawData, setExcalidrawData] = useState<ExcalidrawData>();
+  // 包装 setExcalidrawData, 所有传入都会被深拷贝
+  const setExcalidrawDataPatch = (
+    data: ExcalidrawData | ((prev: ExcalidrawData | undefined) => ExcalidrawData | undefined)
+  ) => {
+    setExcalidrawData((prev) => {
+      // prev 是干净的原始数据
+      // prevClone 是深拷贝的 prev, 可能会被修改
+      const prevClone = structuredClone(prev);
+      // 计算 income
+      const income = typeof data === 'function' ? data(prevClone) : data;
+      // 防止外部对 data 变量修改
+      const incomeClone = structuredClone(income);
+      // 确实相同则返回纯净的 prev
+      if (isEqual(prev, incomeClone)) {
+        return prev;
+      }
+      return incomeClone;
+    });
+  };
+
   // 加载状态
   const [isLoadingData, setIsLoadingData] = useState(true);
   // 是否存在已有数据
@@ -43,7 +64,7 @@ export const ExcalidrawDataProvider = ({ children }: { children: ReactNode }) =>
   // 图名
   const [title, setTitle] = useState<string>();
   // Excalidraw API 实例
-  const [excalidrawAPI, setExcalidrawAPI] = useState<any>();
+  const [excalidrawAPI, setExcalidrawAPI] = useState<ExcalidrawImperativeAPI | undefined>();
 
   return (
     <ExcalidrawDataContext.Provider
@@ -53,7 +74,7 @@ export const ExcalidrawDataProvider = ({ children }: { children: ReactNode }) =>
         hasExistingData,
         title,
         excalidrawAPI,
-        setExcalidrawData,
+        setExcalidrawData: setExcalidrawDataPatch,
         setIsLoadingData,
         setHasExistingData,
         setTitle,

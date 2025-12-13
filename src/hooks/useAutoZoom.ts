@@ -4,6 +4,7 @@
  * 负责监听数据变化和窗口尺寸变化，自动缩放画布以适应内容
  * - 当 Excalidraw API 就绪且有数据时，自动执行缩放
  * - 当窗口尺寸变化时，执行防抖缩放（300ms）
+ * - 仅在非编辑模式下启用窗口尺寸变化的自动缩放, 编辑模式下最大可能保证用户视图不被打扰
  */
 import { useCallback, useEffect, useMemo } from 'react';
 import { debounce } from 'es-toolkit';
@@ -20,6 +21,7 @@ export const useAutoZoom = (isAddonEditMode: boolean) => {
    * 自动缩放以适应画布内容
    */
   const autoZoomToFit = useCallback(() => {
+    if (!excalidrawAPI) return;
     try {
       excalidrawAPI.scrollToContent(excalidrawAPI.getSceneElements(), {
         fitToContent: true,
@@ -68,7 +70,7 @@ export const useAutoZoom = (isAddonEditMode: boolean) => {
 
   useEffect(() => {
     if (!isAddonEditMode) {
-        debouncedAutoZoom();
+      debouncedAutoZoom();
     }
   }, [isAddonEditMode, debouncedAutoZoom]);
 
